@@ -1,36 +1,35 @@
 ﻿using API.Helpers;
 using CORE.Models;
-using CORE.ViewModel.DiscountDeals.FormModel;
-using CORE.ViewModel.SSS.FormModel;
+using CORE.ViewModel.Foods.FormModel;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System.Linq.Expressions;
 
-namespace API.Controllers.SSS
+namespace API.Controllers.Foods
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class DiscountDealsController : ControllerBase
+    public class FoodsController : ControllerBase
     {
         private readonly AppDbContext _context;
 
-        public DiscountDealsController(AppDbContext context)
+        public FoodsController(AppDbContext context)
         {
             _context = context;
         }
-        [HttpPost("List", Name = "DiscountDealsList")]
-        public IActionResult List(int status = 0, string kategori = "HEPSİ")
+        [HttpPost("List", Name = "FoodsList")]
+        public IActionResult List(int status = 0)
         {
             try
             {
-                IQueryable<indirim_anlasmalari> model = _context.indirim_anlasmalaris.Where(w => (status == 0 ? w.SilindiMi == false : 1 == 1) && (kategori == "HEPSİ" ? 1 == 1 : w.Kategori == kategori));
+                IQueryable<yemekler> model = _context.yemeklers.Where(w => (status == 0 ? w.SilindiMi == false : 1 == 1));
 
 
 
-                var searchFields = new Dictionary<string, Expression<Func<indirim_anlasmalari, string>>>
+                var searchFields = new Dictionary<string, Expression<Func<yemekler, string>>>
                 {
-                    { "Baslik", item => (item.Baslik ?? "").ToLower() ?? "" },
+                    { "YemekAdi", item => (item.YemekAdi ?? "").ToLower() ?? "" },
                 };
 
                 var (data, recordsTotal, recordsFiltered) = DataTableUtils.ApplyDataTableParameters(
@@ -49,7 +48,7 @@ namespace API.Controllers.SSS
         }
 
 
-        [HttpGet("Get", Name = "DiscountDealsGet")]
+        [HttpGet("Get", Name = "FoodsGet")]
         public IActionResult Get([BindRequired] int Id)
         {
             try
@@ -60,7 +59,7 @@ namespace API.Controllers.SSS
                     return BadRequest(new { data = "", message = "Id is required", statusCode = "400", section = "Get" });
                 }
 
-                var model = _context.indirim_anlasmalaris.FirstOrDefault(w => w.Id == Id);
+                var model = _context.yemeklers.FirstOrDefault(w => w.Id == Id);
 
                 if (model == null)
                 {
@@ -76,14 +75,15 @@ namespace API.Controllers.SSS
             }
         }
 
-        [HttpPost("Add", Name = "DiscountDealsAdd")]
-        public IActionResult AddAsync([FromForm] DiscountDealsFormModel values)
+
+        [HttpPost("Add", Name = "FoodsAdd")]
+        public async Task<IActionResult> AddAsync([FromForm] FoodsFormModel values)
         {
             try
             {
                 var user = HttpContext.Items["User"] as ikys_user;
 
-                /*var userData = _context.Users.FirstOrDefault(x => x.Id == values.UserId);
+               /* var userData = _context.Users.FirstOrDefault(x => x.Id == values.UserId);
 
                 if (userData == null)
                 {
@@ -91,12 +91,16 @@ namespace API.Controllers.SSS
                 }*/
 
 
-                var model = new indirim_anlasmalari();
-                model.Kategori = values.Kategori;
-                model.Baslik = values.Baslik;
+                var model = new yemekler();
+                model.YemekAdi = values.YemekAdi;
                 model.Aciklama = values.Aciklama;
                 model.OlusturmaTarihi = DateTime.Now;
-                _context.indirim_anlasmalaris.Add(model);
+
+                if (values.Fotograf != null)
+                {
+                    model.Fotograf = await FileHelper.UploadFileToCDN(values.Fotograf, Guid.NewGuid().ToString(), "SbbPortalYemekler");
+                }
+                _context.yemeklers.Add(model);
                 _context.SaveChanges();
 
                 return Ok(new { data = "", message = "Success", statusCode = "200", section = "Add" });
@@ -108,33 +112,39 @@ namespace API.Controllers.SSS
         }
 
 
-        [HttpPost("Update", Name = "DiscountDealsUpdate")]
-        public IActionResult UpdateAsync([FromForm] DiscountDealsFormModel values)
+        [HttpPost("Update", Name = "FoodsUpdate")]
+        public async Task<IActionResult> Update([FromForm] FoodsFormModel values)
         {
             try
             {
+
                 var user = HttpContext.Items["User"] as ikys_user;
 
-                /*var userData = _context.ikys_users.FirstOrDefault(x => x.Id == values.UserId);
-
-                if (userData == null)
+               /* if (values.Id == 0)
                 {
-                    return BadRequest(new { data = "", message = "Error: User Not Found", statusCode = "400", section = "Add" });
+                    return BadRequest(new { data = "", message = "Id is required", statusCode = "400", section = "Update" });
                 }*/
 
-                var data = _context.indirim_anlasmalaris.FirstOrDefault(x => x.Id == values.Id);
-                if (data == null)
+                var model = _context.yemeklers.FirstOrDefault(w => w.Id == values.Id);
+
+                if (model != null)
                 {
-                    return BadRequest(new { data = "", message = "Error: Record Not Found", statusCode = "400", section = "Add" });
+                    model.YemekAdi = values.YemekAdi;
+                    model.Aciklama = values.Aciklama;
+
+                    if (values.Fotograf != null)
+                    {
+                        model.Fotograf = await FileHelper.UploadFileToCDN(values.Fotograf, Guid.NewGuid().ToString(), "SbbPortalYemekler");
+                    }
+                    _context.yemeklers.Update(model);
+                    _context.SaveChanges();
+
+                    return Ok(new { data = "", message = "Success", statusCode = "200", section = "Update" });
                 }
-
-                data.Baslik = values.Baslik;
-                data.Aciklama = values.Aciklama;
-                data.Kategori = values.Kategori;
-                _context.indirim_anlasmalaris.Update(data);
-                _context.SaveChanges();
-
-                return Ok(new { data = "", message = "Success", statusCode = "200", section = "Add" });
+                else
+                {
+                    return NotFound(new { data = "", message = "Error", statusCode = "404", section = "Update" });
+                }
             }
             catch (Exception)
             {
@@ -143,7 +153,7 @@ namespace API.Controllers.SSS
         }
 
 
-        [HttpPost("Delete", Name = "DiscountDealsDelete")]
+        [HttpPost("Delete", Name = "FoodsDelete")]
         public IActionResult Delete([BindRequired] int Id)
         {
             try
@@ -152,12 +162,12 @@ namespace API.Controllers.SSS
                 {
                     return BadRequest(new { data = "", message = "Id is required", statusCode = "400", section = "Delete" });
                 }
-                var model = _context.indirim_anlasmalaris.FirstOrDefault(w => w.Id == Id);
+                var model = _context.yemeklers.FirstOrDefault(w => w.Id == Id);
                 if (model != null)
                 {
 
                     model.SilindiMi = true;
-                    _context.indirim_anlasmalaris.Update(model);
+                    _context.yemeklers.Update(model);
                     _context.SaveChanges();
 
                     return Ok(new { data = "", message = "Success", statusCode = "200", section = "Delete" });

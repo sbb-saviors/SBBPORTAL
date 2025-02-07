@@ -23,6 +23,8 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<sikca_sorulan_sorular> sikca_sorulan_sorulars { get; set; }
 
+    public virtual DbSet<yemekler> yemeklers { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
         => optionsBuilder.UseNpgsql("Host=192.168.55.142;Database=sbbdb;Username=portal_user;Password=!123456!;");
@@ -97,6 +99,21 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.SoruBaslik)
                 .HasMaxLength(255)
                 .HasDefaultValueSql("NULL::character varying");
+        });
+
+        modelBuilder.Entity<yemekler>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("yemekler_pkey");
+
+            entity.ToTable("yemekler", "sbb_portal");
+
+            entity.Property(e => e.Aciklama).HasMaxLength(255);
+            entity.Property(e => e.Fotograf).HasMaxLength(255);
+            entity.Property(e => e.OlusturmaTarihi)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp(6) without time zone");
+            entity.Property(e => e.SilindiMi).HasDefaultValue(false);
+            entity.Property(e => e.YemekAdi).HasMaxLength(100);
         });
 
         OnModelCreatingPartial(modelBuilder);
