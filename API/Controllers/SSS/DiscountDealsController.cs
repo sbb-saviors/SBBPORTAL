@@ -1,5 +1,6 @@
 ﻿using API.Helpers;
 using CORE.Models;
+using CORE.ViewModel.DiscountDeals.FormModel;
 using CORE.ViewModel.SSS.FormModel;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -10,26 +11,26 @@ namespace API.Controllers.SSS
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class SSSController : ControllerBase
+    public class DiscountDealsController : ControllerBase
     {
         private readonly AppDbContext _context;
 
-        public SSSController(AppDbContext context)
+        public DiscountDealsController(AppDbContext context)
         {
             _context = context;
         }
-        [HttpPost("List", Name = "SSSList")]
-        public IActionResult List(int status = 0)
+        [HttpPost("List", Name = "DiscountDealsList")]
+        public IActionResult List(int status = 0, string kategori = "HEPSİ")
         {
             try
             {
-                IQueryable<sikca_sorulan_sorular> model = _context.sikca_sorulan_sorulars.Where(w => (status == 0 ? w.SilindiMi == false : 1 == 1));
+                IQueryable<indirim_anlasmalari> model = _context.indirim_anlasmalaris.Where(w => (status == 0 ? w.SilindiMi == false : 1 == 1) && (kategori == "HEPSİ" ? 1 == 1 : w.Kategori == kategori));
 
 
 
-                var searchFields = new Dictionary<string, Expression<Func<sikca_sorulan_sorular, string>>>
+                var searchFields = new Dictionary<string, Expression<Func<indirim_anlasmalari, string>>>
                 {
-                    { "SoruBaslik", item => (item.SoruBaslik ?? "").ToLower() ?? "" },
+                    { "Baslik", item => (item.Baslik ?? "").ToLower() ?? "" },
                 };
 
                 var (data, recordsTotal, recordsFiltered) = DataTableUtils.ApplyDataTableParameters(
@@ -37,7 +38,7 @@ namespace API.Controllers.SSS
                     Request,
                     searchFields,
                     "Id");
-              
+
 
                 return Ok(new { data = data, recordsTotal, recordsFiltered, message = "Success", statusCode = "200", section = "List" });
             }
@@ -47,7 +48,8 @@ namespace API.Controllers.SSS
             }
         }
 
-        [HttpGet("Get", Name = "SSSGet")]
+
+        [HttpGet("Get", Name = "DiscountDealsGet")]
         public IActionResult Get([BindRequired] int Id)
         {
             try
@@ -58,7 +60,7 @@ namespace API.Controllers.SSS
                     return BadRequest(new { data = "", message = "Id is required", statusCode = "400", section = "Get" });
                 }
 
-                var model = _context.sikca_sorulan_sorulars.FirstOrDefault(w => w.Id == Id);
+                var model = _context.indirim_anlasmalaris.FirstOrDefault(w => w.Id == Id);
 
                 if (model == null)
                 {
@@ -74,8 +76,8 @@ namespace API.Controllers.SSS
             }
         }
 
-        [HttpPost("Add", Name = "SSSAdd")]
-        public IActionResult AddAsync([FromForm] SssFormModel values)
+        [HttpPost("Add", Name = "DiscountDealsAdd")]
+        public IActionResult AddAsync([FromForm] DiscountDealsFormModel values)
         {
             try
             {
@@ -89,11 +91,12 @@ namespace API.Controllers.SSS
                 }*/
 
 
-                var model = new sikca_sorulan_sorular();
-                model.SoruBaslik = values.SoruBaslik;
-                model.SoruCevap = values.SoruCevap;
+                var model = new indirim_anlasmalari();
+                model.Kategori = values.Kategori;
+                model.Baslik = values.Baslik;
+                model.Aciklama = values.Aciklama;
                 model.OlusturmaTarihi = DateTime.Now;
-                _context.sikca_sorulan_sorulars.Add(model);
+                _context.indirim_anlasmalaris.Add(model);
                 _context.SaveChanges();
 
                 return Ok(new { data = "", message = "Success", statusCode = "200", section = "Add" });
@@ -105,8 +108,8 @@ namespace API.Controllers.SSS
         }
 
 
-        [HttpPost("Update", Name = "SSSUpdate")]
-        public IActionResult UpdateAsync([FromForm] SssFormModel values)
+        [HttpPost("Update", Name = "DiscountDealsUpdate")]
+        public IActionResult UpdateAsync([FromForm] DiscountDealsFormModel values)
         {
             try
             {
@@ -119,15 +122,16 @@ namespace API.Controllers.SSS
                     return BadRequest(new { data = "", message = "Error: User Not Found", statusCode = "400", section = "Add" });
                 }*/
 
-                var data = _context.sikca_sorulan_sorulars.FirstOrDefault(x => x.Id == values.Id);
+                var data = _context.indirim_anlasmalaris.FirstOrDefault(x => x.Id == values.Id);
                 if (data == null)
                 {
                     return BadRequest(new { data = "", message = "Error: Record Not Found", statusCode = "400", section = "Add" });
                 }
 
-                data.SoruBaslik = values.SoruBaslik;
-                data.SoruCevap = values.SoruCevap;
-                _context.sikca_sorulan_sorulars.Update(data);
+                data.Baslik = values.Baslik;
+                data.Aciklama = values.Aciklama;
+                data.Kategori = values.Kategori;
+                _context.indirim_anlasmalaris.Update(data);
                 _context.SaveChanges();
 
                 return Ok(new { data = "", message = "Success", statusCode = "200", section = "Add" });
@@ -139,7 +143,7 @@ namespace API.Controllers.SSS
         }
 
 
-        [HttpPost("Delete", Name = "SSSDelete")]
+        [HttpPost("Delete", Name = "DiscountDealsDelete")]
         public IActionResult Delete([BindRequired] int Id)
         {
             try
@@ -148,12 +152,12 @@ namespace API.Controllers.SSS
                 {
                     return BadRequest(new { data = "", message = "Id is required", statusCode = "400", section = "Delete" });
                 }
-                var model = _context.sikca_sorulan_sorulars.FirstOrDefault(w => w.Id == Id);
+                var model = _context.indirim_anlasmalaris.FirstOrDefault(w => w.Id == Id);
                 if (model != null)
                 {
 
                     model.SilindiMi = true;
-                    _context.sikca_sorulan_sorulars.Update(model);
+                    _context.indirim_anlasmalaris.Update(model);
                     _context.SaveChanges();
 
                     return Ok(new { data = "", message = "Success", statusCode = "200", section = "Delete" });

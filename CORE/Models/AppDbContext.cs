@@ -19,6 +19,8 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<ikys_user> ikys_users { get; set; }
 
+    public virtual DbSet<indirim_anlasmalari> indirim_anlasmalaris { get; set; }
+
     public virtual DbSet<sikca_sorulan_sorular> sikca_sorulan_sorulars { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -68,6 +70,20 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.UserPassword).HasColumnType("character varying");
         });
 
+        modelBuilder.Entity<indirim_anlasmalari>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("indirim_anlasmalari_pkey");
+
+            entity.ToTable("indirim_anlasmalari", "sbb_portal");
+
+            entity.Property(e => e.Baslik).HasMaxLength(150);
+            entity.Property(e => e.Kategori).HasMaxLength(50);
+            entity.Property(e => e.OlusturmaTarihi)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp(6) without time zone");
+            entity.Property(e => e.SilindiMi).HasDefaultValue(false);
+        });
+
         modelBuilder.Entity<sikca_sorulan_sorular>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("sikca_sorulan_sorular_pkey");
@@ -75,8 +91,9 @@ public partial class AppDbContext : DbContext
             entity.ToTable("sikca_sorulan_sorular", "sbb_portal");
 
             entity.Property(e => e.OlusturmaTarihi)
-                .HasMaxLength(255)
-                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp(6) without time zone");
+            entity.Property(e => e.SilindiMi).HasDefaultValue(false);
             entity.Property(e => e.SoruBaslik)
                 .HasMaxLength(255)
                 .HasDefaultValueSql("NULL::character varying");
