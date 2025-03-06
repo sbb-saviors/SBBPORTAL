@@ -2,6 +2,7 @@
 using API.Helpers;
 using API.Services;
 using CORE.Models;
+using CORE.ViewModel.Authenticate;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -26,31 +27,31 @@ namespace API.Controllers.Auth
 
         [AllowAnonymous]
         [HttpPost("authenticate")]
-        public IActionResult Authenticate([BindRequired] string UserName, [BindRequired] string UserPassword)
+        public IActionResult Authenticate([FromBody] AuthenticateRequest request)
         {
-
             try
             {
-                var asdasd = _context.ikys_users.Where(x => x.UserName == UserName).FirstOrDefault();
-                var user = _context.ikys_users.SingleOrDefault(x => x.UserName == UserName && x.UserStatus == true);
-                var hashedPassword = HashingHelper.ComputeHash(UserPassword);
+                var user = _context.ikys_users.SingleOrDefault(x => x.UserName == request.UserName && x.UserStatus == true);
+                if (user == null)
+                {
+                    return BadRequest(new { message = "User not found", statusCode = "400", section = "Auth" });
+                }
+
+                var hashedPassword = HashingHelper.ComputeHash(request.UserPassword);
                 if (hashedPassword != user.UserPassword)
                 {
-                    return BadRequest(new { message = "Password erorr", statusCode = "400", section = "Auth" });
+                    return BadRequest(new { message = "Password error", statusCode = "400", section = "Auth" });
                 }
-                else
-                {
-                    var response = _userService.Authenticate(UserName, hashedPassword, ipAddress());
-                    return Ok(response);
-                }
+
+                var response = _userService.Authenticate(request.UserName, hashedPassword, ipAddress());
+                return Ok(response);
             }
             catch (Exception)
             {
-
-                return BadRequest(new {  message = "", statusCode = "400", section = "Auth" });
-
+                return BadRequest(new { message = "An error occurred", statusCode = "400", section = "Auth" });
             }
         }
+
 
         private string ipAddress()
         {
