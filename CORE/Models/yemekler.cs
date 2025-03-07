@@ -16,4 +16,10 @@ public partial class yemekler
     public bool? SilindiMi { get; set; }
 
     public string? Fotograf { get; set; }
+
+    public long? KategoriId { get; set; }
+
+    public virtual yemek_kategorileri? Kategori { get; set; }
+
+    public virtual ICollection<yemek_tarihleri_yemekler> yemek_tarihleri_yemeklers { get; set; } = new List<yemek_tarihleri_yemekler>();
 }

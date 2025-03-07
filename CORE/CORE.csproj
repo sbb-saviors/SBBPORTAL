@@ -19,7 +19,11 @@
 
   <ItemGroup>
     <Folder Include="ViewModel\DiscountDeals\ViewModel\" />
+    <Folder Include="ViewModel\FoodsCategory\ViewModel\" />
+    <Folder Include="ViewModel\FoodsDate\ViewModel\" />
     <Folder Include="ViewModel\Foods\ViewModel\" />
+    <Folder Include="ViewModel\Gallery\ViewModel\" />
+    <Folder Include="ViewModel\News\ViewModel\" />
     <Folder Include="ViewModel\SSS\ViewModel\" />
   </ItemGroup>
 

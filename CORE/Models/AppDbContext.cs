@@ -15,6 +15,10 @@ public partial class AppDbContext : DbContext
     {
     }
 
+    public virtual DbSet<galeri> galeris { get; set; }
+
+    public virtual DbSet<haberler> haberlers { get; set; }
+
     public virtual DbSet<ikys_refresh_token> ikys_refresh_tokens { get; set; }
 
     public virtual DbSet<ikys_user> ikys_users { get; set; }
@@ -22,6 +26,12 @@ public partial class AppDbContext : DbContext
     public virtual DbSet<indirim_anlasmalari> indirim_anlasmalaris { get; set; }
 
     public virtual DbSet<sikca_sorulan_sorular> sikca_sorulan_sorulars { get; set; }
+
+    public virtual DbSet<yemek_kategorileri> yemek_kategorileris { get; set; }
+
+    public virtual DbSet<yemek_tarihleri> yemek_tarihleris { get; set; }
+
+    public virtual DbSet<yemek_tarihleri_yemekler> yemek_tarihleri_yemeklers { get; set; }
 
     public virtual DbSet<yemekler> yemeklers { get; set; }
 
@@ -41,6 +51,33 @@ public partial class AppDbContext : DbContext
             .HasPostgresExtension("postgis")
             .HasPostgresExtension("tds_fdw")
             .HasPostgresExtension("ukbs", "oracle_fdw");
+
+        modelBuilder.Entity<galeri>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("galeri_pkey");
+
+            entity.ToTable("galeri", "sbb_portal");
+
+            entity.Property(e => e.CreatedDate)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone");
+            entity.Property(e => e.Fotograf).HasMaxLength(255);
+            entity.Property(e => e.GaleriId).HasColumnType("character varying");
+            entity.Property(e => e.SilindiMi).HasDefaultValue(false);
+        });
+
+        modelBuilder.Entity<haberler>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("haberler_pkey");
+
+            entity.ToTable("haberler", "sbb_portal");
+
+            entity.Property(e => e.Baslik).HasMaxLength(255);
+            entity.Property(e => e.CreatedDate).HasColumnType("timestamp without time zone");
+            entity.Property(e => e.GaleriId).HasColumnType("character varying");
+            entity.Property(e => e.Kapak).HasMaxLength(255);
+            entity.Property(e => e.SilindiMi).HasDefaultValue(false);
+        });
 
         modelBuilder.Entity<ikys_refresh_token>(entity =>
         {
@@ -101,6 +138,50 @@ public partial class AppDbContext : DbContext
                 .HasDefaultValueSql("NULL::character varying");
         });
 
+        modelBuilder.Entity<yemek_kategorileri>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("yemek_kategorileri_pkey");
+
+            entity.ToTable("yemek_kategorileri", "sbb_portal");
+
+            entity.Property(e => e.CreatedDate).HasColumnType("timestamp without time zone");
+            entity.Property(e => e.KategoriAdi).HasMaxLength(100);
+            entity.Property(e => e.SilindiMi).HasDefaultValue(false);
+        });
+
+        modelBuilder.Entity<yemek_tarihleri>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("yemek_tarihleri_pkey1");
+
+            entity.ToTable("yemek_tarihleri", "sbb_portal");
+
+            entity.Property(e => e.CreatedDate)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp(6) without time zone");
+            entity.Property(e => e.SilindiMi).HasDefaultValue(false);
+            entity.Property(e => e.Tarih).HasColumnType("timestamp(6) without time zone");
+        });
+
+        modelBuilder.Entity<yemek_tarihleri_yemekler>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("yemek_tarihleri_yemekler_pkey1");
+
+            entity.ToTable("yemek_tarihleri_yemekler", "sbb_portal");
+
+            entity.Property(e => e.CreatedDate)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp(6) without time zone");
+            entity.Property(e => e.SilindiMi).HasDefaultValue(false);
+
+            entity.HasOne(d => d.Tarih).WithMany(p => p.yemek_tarihleri_yemeklers)
+                .HasForeignKey(d => d.TarihId)
+                .HasConstraintName("yemek_tarihleri_yemekler_TarihId_fkey");
+
+            entity.HasOne(d => d.Yemek).WithMany(p => p.yemek_tarihleri_yemeklers)
+                .HasForeignKey(d => d.YemekId)
+                .HasConstraintName("yemek_tarihleri_yemekler_YemekId_fkey");
+        });
+
         modelBuilder.Entity<yemekler>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("yemekler_pkey");
@@ -114,6 +195,10 @@ public partial class AppDbContext : DbContext
                 .HasColumnType("timestamp(6) without time zone");
             entity.Property(e => e.SilindiMi).HasDefaultValue(false);
             entity.Property(e => e.YemekAdi).HasMaxLength(100);
+
+            entity.HasOne(d => d.Kategori).WithMany(p => p.yemeklers)
+                .HasForeignKey(d => d.KategoriId)
+                .HasConstraintName("yemekler_KategoriId_fkey");
         });
 
         OnModelCreatingPartial(modelBuilder);

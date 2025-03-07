@@ -20,5 +20,7 @@ namespace CORE.ViewModel.Foods.FormModel
         public bool? SilindiMi { get; set; }
 
         public IFormFile? Fotograf { get; set; }
+
+        public long? KategoriId { get; set; }
     }
 }
