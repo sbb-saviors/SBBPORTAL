@@ -82,13 +82,17 @@ namespace API.Controllers.Gallery
                 var user = HttpContext.Items["User"] as ikys_user;
 
 
-                if (values.Fotograf == null)
+                if (values.file == null)
                 {
-                    return BadRequest(new { data = "", message = "Fotograf is required", statusCode = "400", section = "Add" });
+                    return BadRequest(new { data = "", message = "File is required", statusCode = "400", section = "Add" });
                 }
+                var modelDocs = new galeri();
+                modelDocs.GaleriId = values.GaleriId;
+                modelDocs.Fotograf = await FileHelper.UploadFileToCDN(values.file, Guid.NewGuid().ToString(), "SbbPortalHaberlerGaleri");
+                _context.galeris.Add(modelDocs);
+                _context.SaveChanges();
 
-
-                if (values.Fotograf?.Count() > 0)
+                /*if (values.Fotograf?.Count() > 0)
                 {
                     foreach (var item in values.Fotograf)
                     {
@@ -98,7 +102,7 @@ namespace API.Controllers.Gallery
                         _context.galeris.Add(modelDocs);
                         _context.SaveChanges();
                     }
-                }
+                }*/
 
                 return Ok(new { data = "", message = "Success", statusCode = "200", section = "Add" });
             }

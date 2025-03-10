@@ -13,7 +13,8 @@ namespace CORE.ViewModel.Gallery.FormModel
 
         public string? GaleriId { get; set; }
 
-        public List<IFormFile>? Fotograf { get; set; }
+        //public List<IFormFile>? Fotograf { get; set; }
+        public IFormFile? file { get; set; }
 
         public DateTime? CreatedDate { get; set; }
 
